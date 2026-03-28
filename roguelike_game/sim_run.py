@@ -808,8 +808,8 @@ class MidBattleBot:
                 # 应急条件：敌>我 且 金币不够出普通战士 且 基地血量>30
                 if right_count > left_count and game.left.resource < 65 and game.left_bases[check_lane].hp > 30:
                     # 尝试强制部署战士（会自动扣基地血）
-                    if "Q" in game.player_order_keys:
-                        game.spawn_unit("left", check_lane, "Q")
+                    if "warrior" in game.player_order_keys:
+                        game.spawn_unit("left", check_lane, "warrior")
                         return  # 应急出了一个就返回，下次再判断
         
         # === 检查是否有等待中的目标单位（进攻等待机制）===
@@ -1074,14 +1074,14 @@ class MidBattleBot:
                 return  # 等待，下次再尝试
         
         # === 祝福：教官光环 - 坦克替换为战士 ===
-        if blessing == "veteran_mentor" and pick and pick != "Q":
+        if blessing == "veteran_mentor" and pick and pick != "warrior":
             pick_ut = UNIT_TYPES.get(pick)
             if pick_ut:
                 # 判断是否是坦克单位（使用统一的is_tank判定）
                 is_tank_unit = is_tank(pick)
                 # 如果选中的是坦克，且战士可用，则替换为战士
-                if is_tank_unit and "Q" in game.player_order_keys and game.can_spawn("left", lane, "Q"):
-                    pick = "Q"
+                if is_tank_unit and "warrior" in game.player_order_keys and game.can_spawn("left", lane, "warrior"):
+                    pick = "warrior"
 
         ok = game.spawn_unit("left", lane, pick)
         if ok and self._record_event_fn:
@@ -1162,15 +1162,15 @@ class MidBattleBot:
 
 # === 战略克制与阵容识别常量 ===
 STRATEGIC_COUNTERS = {
-    "G": {"S", "D", "L", "A"},  # 刺客 -> 远程
-    "H": {"S", "D", "L", "A"},  # 破箭 -> 远程
-    "F": {"G", "H"},            # 犀牛 -> 反制切后/拦截
-    "N": {"G", "H"},            # 轻骑 -> 反制切后/拦截
-    "K": {"F", "N"},            # 矛兵 -> 停住冲锋
+    "assassin": {"archer", "mage", "frost_archer", "priest"},  # 刺客 -> 远程
+    "interceptor": {"archer", "mage", "frost_archer", "priest"},  # 破箭 -> 远程
+    "rhino": {"assassin", "interceptor"},            # 犀牛 -> 反制切后/拦截
+    "light_cavalry": {"assassin", "interceptor"},            # 轻骑 -> 反制切后/拦截
+    "spearman": {"rhino", "light_cavalry"},            # 矛兵 -> 停住冲锋
 }
-RANGED_SET = {"S", "D", "L", "A"}
+RANGED_SET = {"archer", "mage", "frost_archer", "priest"}
 # 辅助/拦截/治疗：低直接输出或功能性单位
-SUPPORT_SET = {"A", "J", "H"}
+SUPPORT_SET = {"priest", "drummer", "interceptor"}
 
 
 class SimRunner:
@@ -1189,17 +1189,17 @@ class SimRunner:
         # 开局兵种：每局随机抽 1 个，后续通过商店/俘虏逐步解锁（更贴近真实玩家开局）
         # 但为了避免“开局抽到功能性单位导致体验/测试口径失真”，这里限制开局池：
         # - 只允许近战（非远程）
-        # - 排除治疗/增益（A/J）
-        # - 排除破箭（H：基本无攻击，且强依赖对面远程）
-        # 老兵主角模式：开局强制锁定战士（Q）
-        self.run.units = ["Q"]
-        self.run.unit_levels = {"Q": 1}
-        self._starting_units = ["Q"]
-        self._primary_unit = "Q"
-        self.run.primary_unit = "Q"
-        
+        # - 排除治疗/增益（priest/drummer）
+        # - 排除破箭（interceptor：基本无攻击，且强依赖对面远程）
+        # 老兵主角模式：开局强制锁定战士（warrior）
+        self.run.units = ["warrior"]
+        self.run.unit_levels = {"warrior": 1}
+        self._starting_units = ["warrior"]
+        self._primary_unit = "warrior"
+        self.run.primary_unit = "warrior"
+
         # 记录获得第1个兵种（老兵）的层数
-        self._unit_acquire_layers = {"Q": 0}
+        self._unit_acquire_layers = {"warrior": 0}
         self.run.skills = []  # 战役开局无技能（与 main.py 一致）
         self.run.boons = {}
         self.run.battle_gold_mult = 1.0
@@ -1312,7 +1312,7 @@ class SimRunner:
         
         # 过滤：战士Q默认不能在商店出现（除非选了不屈之志）
         if self.run.blessing_selected != "veteran_unyielding":
-            unit_candidates = [k for k in unit_candidates if k != "Q"]
+            unit_candidates = [k for k in unit_candidates if k != "warrior"]
         
         rng.shuffle(unit_candidates)
         for _ in range(2):
@@ -1461,30 +1461,30 @@ class SimRunner:
                     # 只有战士时，强制选远程
                     if len(self.run.units) == 1 and cur == 0:
                         ut = UNIT_TYPES.get(uk)
-                        if ut and ut.is_ranged and uk in {"S", "D", "L"}:  # 弓手/法师/冰弓
+                        if ut and ut.is_ranged and uk in {"archer", "mage", "frost_archer"}:  # 弓手/法师/冰弓
                             return 9000.0  # 高优先级
                         else:
                             return -1e6  # 非远程直接排除
-                
+
                 # === 祝福：教官光环 - 调整购买倾向 ===
                 if blessing == "veteran_mentor" and t == "unit":
                     uk = str(it.get("payload") or "")
                     ut = UNIT_TYPES.get(uk)
                     cur = self._current_unit_level(uk)
-                    
+
                     # 战士升级：高优先级（确保战士够肉）
-                    if uk == "Q":
+                    if uk == "warrior":
                         if cur == 1:  # Lv1→2 是质变
                             return 8000.0
                         elif cur == 2:  # Lv2→3 锦上添花
                             return 6000.0
-                    
+
                     # 远程/DPS单位：次优先级（享受攻速buff）
                     if ut and (ut.is_ranged or "dps" in getattr(ut, "tags", [])):
                         return 7000.0 - (cur * 500)
-                    
+
                     # 其他坦克：降低优先级（会被替换成战士）
-                    if ut and "tank" in getattr(ut, "tags", []) and uk != "Q":
+                    if ut and "tank" in getattr(ut, "tags", []) and uk != "warrior":
                         return 3000.0
                 
                 # 目标：至少买到 1 个技能。但弱化"攒钱"限制，因为商店频繁，第一次买不起第二次基本能买得起。
@@ -1766,7 +1766,7 @@ class SimRunner:
         # 老兵主角模式：除非拿了"不屈之志"，否则锻造名单排除战士（Q）
         forge_candidates = self.run.units
         if self.run.blessing_selected != "veteran_unyielding":
-            forge_candidates = [k for k in self.run.units if k != "Q"]
+            forge_candidates = [k for k in self.run.units if k != "warrior"]
         if not forge_candidates:
             return None
         counts = self.run.forge.spawn_count_by_unit
@@ -1794,7 +1794,7 @@ class SimRunner:
         def_lvl = int(self.run.forge.defense_level_by_unit.get(target, 0))
         
         # === 祝福：不屈之志 - 优先把战士锻到满级 ===
-        if blessing == "veteran_unyielding" and target == "Q":
+        if blessing == "veteran_unyielding" and target == "warrior":
             # 优先攻击满，再防御满
             if off_lvl < max_level:
                 chosen_dir = "offense"
@@ -1848,7 +1848,7 @@ class SimRunner:
             return
         candidates = list(self.run.units)
         if blessing != "veteran_unyielding":
-            candidates = [k for k in candidates if k != "Q"]
+            candidates = [k for k in candidates if k != "warrior"]
         if not candidates:
             return
         rng = self.run.fork_rng("forge_random_target")
@@ -1860,7 +1860,7 @@ class SimRunner:
         def_lvl = int(self.run.forge.defense_level_by_unit.get(target, 0))
         
         # === 祝福：不屈之志 - 优先把战士锻到满级 ===
-        if blessing == "veteran_unyielding" and target == "Q":
+        if blessing == "veteran_unyielding" and target == "warrior":
             if off_lvl < max_level:
                 chosen_dir = "offense"
                 cur_lvl = off_lvl
@@ -1922,7 +1922,7 @@ class SimRunner:
         
         # 过滤：默认情况下战士Q不能通过俘虏获得（除非选了不屈之志）
         if self.run.blessing_selected != "veteran_unyielding":
-            base_set = [k for k in base_set if k != "Q"]
+            base_set = [k for k in base_set if k != "warrior"]
         
         rng.shuffle(base_set)
         k_num = 2
@@ -2045,11 +2045,11 @@ class SimRunner:
                 # === 祝福：不屈意志 - 开局奖励 ===
                 if pick == "veteran_unyielding":
                     # 战士升至2级
-                    self.run.unit_levels["Q"] = 2
+                    self.run.unit_levels["warrior"] = 2
                     # 攻击锻造+2
-                    self.run.forge.offense_level_by_unit["Q"] = 2
+                    self.run.forge.offense_level_by_unit["warrior"] = 2
                     # 防御锻造+2
-                    self.run.forge.defense_level_by_unit["Q"] = 2
+                    self.run.forge.defense_level_by_unit["warrior"] = 2
                 
                 # === 祝福：匠人精神 - 赠送 3 次随机锻造 ===
                 if pick == "craftsman_spirit":
@@ -2078,10 +2078,10 @@ class SimRunner:
         seed = (base_seed << 7) ^ (state.battle_count + 1) ^ (stage_idx << 11)
         rng = self.run.fork_rng(f"enemy_pool:{seed}")
         
-        # 第0层禁止出现战士(Q)、犀牛(F)、自爆车(M) - 避免开局过难
+        # 第0层禁止出现战士(warrior)、犀牛(rhino)、自爆车(exploder) - 避免开局过难
         available_keys = list(ORDER_KEYS)
         if node.layer_index == 0:
-            available_keys = [k for k in ORDER_KEYS if k not in ("Q", "F", "M")]
+            available_keys = [k for k in ORDER_KEYS if k not in ("warrior", "rhino", "exploder")]
             ai_k = min(ai_k, len(available_keys))
         
         if ai_k >= len(available_keys):
@@ -2709,14 +2709,14 @@ class SimRunner:
                     
                     # 检查构筑健康度：至少有一近战一远程
                     bot_has_melee = any(u not in RANGED_SET and u not in SUPPORT_SET for u in my_units)
-                    bot_has_ranged = any(u in {"S", "D", "L"} for u in my_units)
-                    
+                    bot_has_ranged = any(u in {"archer", "mage", "frost_archer"} for u in my_units)
+
                     if bot_has_melee and bot_has_ranged:
                         # 缺陷 2: AI 全是远程 (缺乏坦克)
                         if all(u in RANGED_SET or u in SUPPORT_SET for u in enemy_set):
                             s += 0.4
                         # 缺陷 3: AI 全是近战 (缺乏手长效率)
-                        elif all(u not in {"S", "D", "L"} for u in enemy_set):
+                        elif all(u not in {"archer", "mage", "frost_archer"} for u in enemy_set):
                             s += 0.3
 
             # 仅处理“没钱买东西”的情况：金币低于最低商品价时，降低去商店的倾向
@@ -3400,7 +3400,7 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
     for ep in episodes:
         try:
             spawn_counts = json.loads(ep.spawn_counts_json) if ep.spawn_counts_json else {}
-            q_spawn = spawn_counts.get("Q", 0)
+            q_spawn = spawn_counts.get("warrior", 0)
             total_spawn = sum(spawn_counts.values())
             if total_spawn > 0:
                 q_pct = (q_spawn / total_spawn) * 100
@@ -3420,8 +3420,8 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
     # 破箭数据
     h_owned_rate = 0
     h_win_contrib = 0
-    if "H" in by_unit_owned:
-        h_data = by_unit_owned["H"]
+    if "interceptor" in by_unit_owned:
+        h_data = by_unit_owned["interceptor"]
         h_owned_rate = (h_data.get("n", 0) / n_total * 100) if n_total > 0 else 0
         h_win_rate = float(h_data.get("win_rate", 0.0))
         h_win_contrib = (h_win_rate - global_win_rate) * 100
@@ -3590,7 +3590,7 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
     # 计算每个兵种的综合数据
     unit_master_data = []
     for uk in ORDER_KEYS:
-        if uk == "Q":  # 战士单独处理
+        if uk == "warrior":  # 战士单独处理
             continue
         
         owned_data = by_unit_owned.get(uk, {})
@@ -3644,8 +3644,8 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
         lines.append(f"| {label} | {ownership_rate:.1f}% | {avg_spawn:.1f} | {avg_acquire_layer:.1f} | {owned_avg_reached:.2f} | {owned_win_rate*100:.1f}% | **{win_contrib:+.1f}%**{arrow} | {rating} |")
     
     # 战士单独一行
-    q_owned_data = by_unit_owned.get("Q", {})
-    q_avg_spawn = unit_spawn_avg.get("Q", 0.0)
+    q_owned_data = by_unit_owned.get("warrior", {})
+    q_avg_spawn = unit_spawn_avg.get("warrior", 0.0)
     q_avg_reached = float(q_owned_data.get("reached_mean", 0.0))
     q_win_rate = float(q_owned_data.get("win_rate", 0.0))
     lines.append(f"| {_unit_label('Q')} | 100.0% | {q_avg_spawn:.1f} | 0.0 | {q_avg_reached:.2f} | {q_win_rate*100:.1f}% | -- | 🔰 基石/待优化 |")
@@ -3810,7 +3810,7 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
         for ep in episodes:
             try:
                 spawn_counts = json.loads(ep.spawn_counts_json) if ep.spawn_counts_json else {}
-                q_spawn = spawn_counts.get("Q", 0)
+                q_spawn = spawn_counts.get("warrior", 0)
                 total_spawn = sum(spawn_counts.values())
                 if total_spawn > 0:
                     q_pct = (q_spawn / total_spawn) * 100
@@ -3871,9 +3871,9 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
                     forge_levels = json.loads(ep.forge_levels_json) if ep.forge_levels_json else {}
                     spawn_counts = json.loads(ep.spawn_counts_json) if ep.spawn_counts_json else {}
                     
-                    total_q_level += unit_levels.get("Q", 1)
-                    total_q_forge += forge_levels.get("Q", 0)
-                    total_q_spawn += spawn_counts.get("Q", 0)
+                    total_q_level += unit_levels.get("warrior", 1)
+                    total_q_forge += forge_levels.get("warrior", 0)
+                    total_q_spawn += spawn_counts.get("warrior", 0)
                     total_all_spawn += sum(spawn_counts.values())
                 except:
                     continue
@@ -3903,11 +3903,11 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
     
     # 统计战士+其他兵种的表现
     for uk in ORDER_KEYS:
-        if uk == "Q":
+        if uk == "warrior":
             continue
         
-        # 找到同时拥有Q和uk的局（units 是用 | 分隔的字符串）
-        synergy_episodes = [ep for ep in episodes if "Q" in ep.units.split("|") and uk in ep.units.split("|")]
+        # 找到同时拥有warrior和uk的局（units 是用 | 分隔的字符串）
+        synergy_episodes = [ep for ep in episodes if "warrior" in ep.units.split("|") and uk in ep.units.split("|")]
         n = len(synergy_episodes)
         
         if n >= 5:  # 至少5个样本才显示
@@ -3991,7 +3991,7 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
             else:
                 forge_lift = "--"
             
-            owned_str = f"+{owned_lift_reached:.1f} / {owned_lift_win:+.1f}%" if uk != "Q" else "--"
+            owned_str = f"+{owned_lift_reached:.1f} / {owned_lift_win:+.1f}%" if uk != "warrior" else "--"
             
             lines.append(f"| {_unit_label(uk)} | {n_owned} | {owned_str} | {lv2_lift} | {lv3_lift} | {lv4_lift} | {forge_lift} |")
     
@@ -4062,7 +4062,7 @@ def _render_report_md(summary: dict, episodes: List[EpisodeResult]) -> str:
                 try:
                     spawn_counts = json.loads(ep.spawn_counts_json) if ep.spawn_counts_json else {}
                     total_spawns += sum(spawn_counts.values())
-                    q_spawns += spawn_counts.get("Q", 0)
+                    q_spawns += spawn_counts.get("warrior", 0)
                 except:
                     continue
             

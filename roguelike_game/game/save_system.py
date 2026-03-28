@@ -11,10 +11,33 @@ from .campaign import CampaignNode, CampaignState
 from .run_state import CampaignRunState, ComboState, ForgeState, OneShotState, PrisonerMemoryState
 
 
-SAVE_VERSION = 1
+SAVE_VERSION = 2
 AUTOSAVE_FILENAME = "autosave.json"
 AUTOSAVE_BAK_FILENAME = "autosave.bak.json"
 MIRROR_PROFILE_FILENAME = "mirror_profile.json"
+
+# 旧单字母 key 到新语义化 key 的映射（用于存档兼容）
+OLD_TO_NEW_KEY = {
+    "Q": "warrior", "W": "shield", "E": "maul", "R": "berserker",
+    "A": "priest", "S": "archer", "D": "mage", "F": "rhino",
+    "G": "assassin", "H": "interceptor", "J": "drummer", "K": "spearman",
+    "L": "frost_archer", "M": "exploder", "N": "light_cavalry",
+}
+
+
+def _migrate_unit_key(key: str) -> str:
+    """将旧的单字母 key 转换为新的语义化 key"""
+    return OLD_TO_NEW_KEY.get(key, key)
+
+
+def _migrate_unit_list(keys: list) -> list:
+    """迁移兵种列表，同时过滤掉已删除的 'O' (splitling)"""
+    return [_migrate_unit_key(k) for k in keys if k != "O"]
+
+
+def _migrate_unit_dict(d: dict) -> dict:
+    """迁移以兵种 key 为键的字典，同时过滤掉已删除的 'O' (splitling)"""
+    return {_migrate_unit_key(k): v for k, v in d.items() if k != "O"}
 
 
 def _env_truthy(name: str) -> bool:
@@ -256,6 +279,24 @@ def _campaign_run_from_dict(d: dict) -> CampaignRunState:
     except Exception:
         rs.mirror_last_updated = 0.0
 
+    # 兵种 key 迁移（旧单字母 -> 新语义化命名）
+    if isinstance(rs.units, list):
+        rs.units = _migrate_unit_list(rs.units)
+    if isinstance(rs.unit_levels, dict):
+        rs.unit_levels = _migrate_unit_dict(rs.unit_levels)
+    if rs.primary_unit:
+        rs.primary_unit = _migrate_unit_key(rs.primary_unit)
+    if isinstance(rs.last_battle_enemy_types, list):
+        rs.last_battle_enemy_types = _migrate_unit_list(rs.last_battle_enemy_types)
+    if isinstance(rs.last_battle_ai_types, list):
+        rs.last_battle_ai_types = _migrate_unit_list(rs.last_battle_ai_types)
+    if isinstance(rs.prisoner_queue, list):
+        rs.prisoner_queue = _migrate_unit_list(rs.prisoner_queue)
+    if hasattr(rs, 'forge_selected_unit') and rs.forge_selected_unit:
+        rs.forge_selected_unit = _migrate_unit_key(rs.forge_selected_unit)
+    if hasattr(rs, 'forge_default_unit') and rs.forge_default_unit:
+        rs.forge_default_unit = _migrate_unit_key(rs.forge_default_unit)
+
     # 嵌套状态
     oneshot = run_data.get("oneshot") or {}
     if isinstance(oneshot, dict):
@@ -270,18 +311,18 @@ def _campaign_run_from_dict(d: dict) -> CampaignRunState:
     forge = run_data.get("forge") or {}
     if isinstance(forge, dict):
         rs.forge = ForgeState(
-            offense_level_by_unit=dict(forge.get("offense_level_by_unit", {}) or {}),
-            defense_level_by_unit=dict(forge.get("defense_level_by_unit", {}) or {}),
-            spawn_count_by_unit=dict(forge.get("spawn_count_by_unit", {}) or {}),
-            last_target_unit=forge.get("last_target_unit"),
+            offense_level_by_unit=_migrate_unit_dict(forge.get("offense_level_by_unit", {}) or {}),
+            defense_level_by_unit=_migrate_unit_dict(forge.get("defense_level_by_unit", {}) or {}),
+            spawn_count_by_unit=_migrate_unit_dict(forge.get("spawn_count_by_unit", {}) or {}),
+            last_target_unit=_migrate_unit_key(forge.get("last_target_unit")) if forge.get("last_target_unit") else None,
             last_direction=forge.get("last_direction"),
         )
 
     prisoners = run_data.get("prisoners") or {}
     if isinstance(prisoners, dict):
         rs.prisoners = PrisonerMemoryState(
-            joined_once=dict(prisoners.get("joined_once", {}) or {}),
-            executed_once=dict(prisoners.get("executed_once", {}) or {}),
+            joined_once=_migrate_unit_dict(prisoners.get("joined_once", {}) or {}),
+            executed_once=_migrate_unit_dict(prisoners.get("executed_once", {}) or {}),
         )
 
     combo = run_data.get("combo") or {}

@@ -892,45 +892,6 @@ class UnitArchetypes:
         suicide_on_attack=False,  # 正常攻击，死亡时才爆炸
     )
 
-    SPLITLING = dict(
-        name=tr("小裂", "Splinter"),
-        tags=["melee", "dps"],
-        shape="circle",
-        color=GREEN,
-        cost=0,
-        hp=60,
-        speed=85.0,
-        damage=10,
-        cooldown=0.9,
-        range=24,
-        is_ranged=False,
-        projectile_speed=0.0,
-        radius=10,
-        is_aoe=False,
-        aoe_radius=0.0,
-        is_healer=False,
-        heal_amount=0,
-        ignore_stop_when_enemy=False,
-        prioritize_high_damage=False,
-        intercept_radius=0.0,
-        intercept_cooldown=0.0,
-        is_buffer=False,
-        buff_move_mult=1.0,
-        buff_cooldown_mult=1.0,
-        aura_radius=0.0,
-        is_charger=False,
-        knockback_factor=0.0,
-        bonus_vs_charge_mult=1.0,
-        charge_interrupt_stun=0.0,
-        split_on_death=False,
-        split_child_key=None,
-        split_children_count=0,
-        projectile_slow_stack=0,
-        projectile_slow_duration=0.0,
-        frost_stun_cap=0,
-        frost_stun_duration=0.0,
-    )
-
     # 新增：轻骑兵（击退随移速）
     LIGHT_CAV = dict(
         name=tr("轻骑", "Light Cavalry"),

@@ -25,22 +25,22 @@ UNIT_NAME_TO_SPRITE_FOLDER: Dict[str, str] = {
     "冰弓": "frost_archer",
     "自爆车": "exploder",
     "轻骑": "light_cavalry",
-    # Unit key
-    "Q": "warrior",
-    "W": "shield",
-    "E": "scout",
-    "R": "berserker",
-    "A": "medic",
-    "S": "archer",
-    "D": "mage",
-    "F": "rhino",
-    "G": "assassin",
-    "H": "interceptor",
-    "J": "drummer",
-    "K": "spearman",
-    "L": "frost_archer",
-    "M": "exploder",
-    "N": "light_cavalry",
+    # Unit key (语义化名称，与文件夹名一致)
+    "warrior": "warrior",
+    "shield": "shield",
+    "maul": "scout",  # 大锤的精灵图文件夹名为 scout
+    "berserker": "berserker",
+    "priest": "medic",  # 牧师的精灵图文件夹名为 medic
+    "archer": "archer",
+    "mage": "mage",
+    "rhino": "rhino",
+    "assassin": "assassin",
+    "interceptor": "interceptor",
+    "drummer": "drummer",
+    "spearman": "spearman",
+    "frost_archer": "frost_archer",
+    "exploder": "exploder",
+    "light_cavalry": "light_cavalry",
 }
 
 

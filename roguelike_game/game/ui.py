@@ -339,77 +339,77 @@ def _get_background_surface() -> Optional[pg.Surface]:
         return None
 
 UNIT_BOOK: Dict[str, Dict[str, str]] = {
-    "Q": {
+    "warrior": {
         "short": "均衡近战，顶线之选。",
         "role": "均衡前排",
         "intro": "费用适中，可在敌人压线时顶住并配合远程火力稳固战局。",
     },
-    "W": {
+    "shield": {
         "short": "高血量肉盾，护队友。",
         "role": "重盾防线",
         "intro": "极高耐久承担第一波火力，适合搭配治疗或鼓手组成铁桶防线。",
     },
-    "E": {
+    "maul": {
         "short": "高速突袭，近战眩晕。",
         "role": "高爆刺击",
         "intro": "冲到前排后眩晕近战目标，快速撕裂薄弱防线，需要防远程火力。",
     },
-    "R": {
+    "berserker": {
         "short": "近战范围伤害。",
         "role": "踏入式清线",
         "intro": "挥击带范围伤害，适合清理成群敌军，需护卫防止被集火。",
     },
-    "A": {
+    "priest": {
         "short": "远程治疗，不输出。",
         "role": "后排支援",
         "intro": "持续给同线友军补血，保持前排续航，是拖住长线战斗的核心。",
     },
-    "S": {
+    "archer": {
         "short": "廉价远程火力。",
         "role": "基础输出",
         "intro": "射程远、费用低，适合作为量产火力点，搭配前排稳定推进。",
     },
-    "D": {
+    "mage": {
         "short": "远程爆破，AOE 输出。",
         "role": "爆发法系",
         "intro": "高额范围魔法伤害，用于清理密集敌阵，需要前排保护避免被击杀。",
     },
-    "F": {
+    "rhino": {
         "short": "冲撞肉盾，附带击退。",
         "role": "重装推进",
         "intro": "冲锋附带范围伤害与击退，适合撕开战线，但需要支援避免被风筝。",
     },
-    "G": {
+    "assassin": {
         "short": "直扑后排，刺杀远程。",
         "role": "背刺专家",
         "intro": "无视小兵直取远程/辅助，清除敌方关键火力，需避开厚重防线。",
     },
-    "H": {
+    "interceptor": {
         "short": "拦截投射，反弹火力。",
         "role": "投射屏障",
         "intro": "拦截并反弹敌方炮火，克制远程阵容，为己方推进创造窗口。",
     },
-    "J": {
+    "drummer": {
         "short": "光环加速与攻速。",
         "role": "团队增益",
         "intro": "为同线友军提供移速和攻速增益，是远程火力与轻骑兵的最佳拍档。",
     },
-    "K": {
+    "spearman": {
         "short": "克制冲锋，附带打断。",
         "role": "反骑兵",
         "intro": "长矛在命中冲锋单位时造成额外伤害并打断，对抗轻骑和犀牛很有效。",
     },
-    "L": {
+    "frost_archer": {
         "short": "减速叠层，触发眩晕。",
         "role": "冰控射手",
         "intro": "箭矢叠加减速并在满层眩晕一次，拖慢厚重敌军的推进节奏。",
     },
-    "M": {
+    "exploder": {
         "short": "近身自爆，清扫护卫。",
         "role": "削线炸弹",
         "intro": "接近目标后死亡爆炸，适合与前排混战时交换，注意防止被远程拆掉。",
     },
-    "N": {
+    "light_cavalry": {
         "short": "高速冲锋，击退成片。",
         "role": "机动力量",
         "intro": "首冲造成大范围击退，快速打散敌阵，但怕控制与矛兵。",
@@ -900,8 +900,8 @@ def draw_unit(
 
         # AOE 标记：四个小点
         if getattr(ut, 'is_aoe', False):
-            # 狂战士（Hexagon/R）特例：不绘制AOE点
-            is_berserker = (getattr(ut, "key", "") == "R")
+            # 狂战士（Hexagon/berserker）特例：不绘制AOE点
+            is_berserker = (getattr(ut, "key", "") == "berserker")
             if not is_berserker:
                 d = r + 4
                 for (dx, dy) in ((0, -d), (0, d), (-d, 0), (d, 0)):
@@ -1414,8 +1414,8 @@ def draw_world(surface: pg.Surface, game: Game, font: pg.font.Font):
     # 投射物
     for p in game.projectiles:
         color = (240, 240, 240)
-        # 冰弓（L/FROST_ARCHER）子弹改为荧光蓝，与精灵图风格一致
-        if p.owner and getattr(p.owner.unit_type, "key", "") == "L":
+        # 冰弓（frost_archer）子弹改为荧光蓝，与精灵图风格一致
+        if p.owner and getattr(p.owner.unit_type, "key", "") == "frost_archer":
             color = (100, 240, 255)  # 荧光冰蓝色
         elif p.frost_stun_cap > 0:  # 备选判断：如果有寒冰眩晕能力
             color = (100, 240, 255)
@@ -1509,7 +1509,7 @@ def draw_palette(surface: pg.Surface, font: pg.font.Font, game: Game, layout: di
         ut = UNIT_TYPES[k]
         # 实时费用逻辑
         actual_cost = ut.cost
-        if k == "Q" and getattr(game, 'veteran_q_free_cost', False):
+        if k == "warrior" and getattr(game, 'veteran_q_free_cost', False):
             actual_cost = 0
         else:
             actual_cost = int(actual_cost * getattr(game, 'left_cost_mult', 1.0))
@@ -3231,21 +3231,21 @@ def _short_desc(ut) -> str:
 
 def _max_level_effect_text(key: str) -> str:
     effect_map = {
-        "Q": "首次受击无敌5秒",
-        "W": "被攻击反伤20%",
-        "E": "重锤命中附带48范围眩晕",
-        "R": "攻击吸血20%",
-        "A": "治疗范围提升至120",
-        "S": "箭矢可穿透1个目标并启用伤害衰减",
-        "D": "攻击附带点燃（半径60，3秒，每秒60%伤害）",
-        "F": "第4次击退触发1秒眩晕",
-        "G": "己方半场隐身",
-        "H": "反弹伤害转治疗8%",
-        "J": "为友军施加25%最大生命护盾（10秒一次，持续5秒）",
-        "K": "控制免疫",
-        "L": "满层眩晕范围提升至60",
-        "M": "自爆后留下燃烧（半径70，5秒，每秒35伤害）",
-        "N": "冲锋冷却缩短至2秒",
+        "warrior": "首次受击无敌5秒",
+        "shield": "被攻击反伤20%",
+        "maul": "重锤命中附带48范围眩晕",
+        "berserker": "攻击吸血20%",
+        "priest": "治疗范围提升至120",
+        "archer": "箭矢可穿透1个目标并启用伤害衰减",
+        "mage": "攻击附带点燃（半径60，3秒，每秒60%伤害）",
+        "rhino": "第4次击退触发1秒眩晕",
+        "assassin": "己方半场隐身",
+        "interceptor": "反弹伤害转治疗8%",
+        "drummer": "为友军施加25%最大生命护盾（10秒一次，持续5秒）",
+        "spearman": "控制免疫",
+        "frost_archer": "满层眩晕范围提升至60",
+        "exploder": "自爆后留下燃烧（半径70，5秒，每秒35伤害）",
+        "light_cavalry": "冲锋冷却缩短至2秒",
     }
     return effect_map.get(key, "")
 

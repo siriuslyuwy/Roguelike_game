@@ -66,22 +66,21 @@ def _resolve_seed(seed_opt: int | None) -> int:
 # === 临时：英文显示名（用于 trace 可读性）===
 # 说明：当前仓库里 UnitType.name 是中文；正式做中英双语时建议把 i18n 做到 constants / resources 中。
 UNIT_KEY_TO_EN: dict[str, str] = {
-    "Q": "Warrior",
-    "W": "Shieldbearer",
-    "E": "Hammer",
-    "R": "Berserker",
-    "A": "Priest",
-    "S": "Archer",
-    "D": "Mage",
-    "F": "Rhino",
-    "G": "Assassin",
-    "H": "Interceptor",
-    "J": "Drummer",
-    "K": "Spearman",
-    "L": "Frost Archer",
-    "M": "Bomber",
-    "N": "Light Cavalry",
-    "O": "Splitling",
+    "warrior": "Warrior",
+    "shield": "Shieldbearer",
+    "maul": "Hammer",
+    "berserker": "Berserker",
+    "priest": "Priest",
+    "archer": "Archer",
+    "mage": "Mage",
+    "rhino": "Rhino",
+    "assassin": "Assassin",
+    "interceptor": "Interceptor",
+    "drummer": "Drummer",
+    "spearman": "Spearman",
+    "frost_archer": "Frost Archer",
+    "exploder": "Bomber",
+    "light_cavalry": "Light Cavalry",
 }
 
 

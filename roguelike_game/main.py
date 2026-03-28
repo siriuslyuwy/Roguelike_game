@@ -554,8 +554,8 @@ def run():
             price_mult = float(campaign_run.oneshot.next_shop_price_mult_once or 1.0)
             campaign_run.oneshot.next_shop_price_mult_once = 1.0
 
-            # 弱势开局补偿（方案B升级版）：若开局为弱势首槽，则“第一次商店”全场商品 7 折
-            weak_start_units = {"E", "F", "G", "N", "M"}
+            # 弱势开局补偿（方案B升级版）：若开局为弱势首槽，则"第一次商店"全场商品 7 折
+            weak_start_units = {"maul", "rhino", "assassin", "light_cavalry", "exploder"}
             primary = str(getattr(campaign_run, "primary_unit", "") or "")
             if int(getattr(campaign_run, "shops_visited", 0) or 0) <= 0 and primary in weak_start_units:
                 price_mult *= 0.7
@@ -656,7 +656,7 @@ def run():
             # 1. 兵种升级/解锁（最多2个）
             unit_candidates = [k for k in ORDER_KEYS if (_current_unit_level(k) < MAX_UNIT_LEVEL) and not (_current_unit_level(k) == 0 and len(campaign_run.units) >= _max_unit_count())]
             if campaign_run.blessing_selected != "veteran_unyielding":
-                unit_candidates = [k for k in unit_candidates if k != "Q"]
+                unit_candidates = [k for k in unit_candidates if k != "warrior"]
             rng.shuffle(unit_candidates)
             for _ in range(2):
                 if unit_candidates:
@@ -1344,10 +1344,10 @@ def run():
             if not campaign_run.units:
                 return None, "无可用兵种"
             
-            # 过滤：默认情况下战士Q不能锻造（除非选了不屈之志）
+            # 过滤：默认情况下战士warrior不能锻造（除非选了不屈之志）
             forgeable = campaign_run.units
             if campaign_run.blessing_selected != "veteran_unyielding":
-                forgeable = [k for k in forgeable if k != "Q"]
+                forgeable = [k for k in forgeable if k != "warrior"]
             
             if not forgeable:
                 return None, "无可锻造的兵种"
@@ -1433,9 +1433,9 @@ def run():
             T = [k for k in raw if k in ORDER_KEYS]
             Tset = list(dict.fromkeys(T))  # 去重保序
             
-            # 过滤：默认情况下战士Q不能通过俘虏升级（除非选了不屈之志）
+            # 过滤：默认情况下战士warrior不能通过俘虏升级（除非选了不屈之志）
             if campaign_run.blessing_selected != "veteran_unyielding":
-                Tset = [k for k in Tset if k != "Q"]
+                Tset = [k for k in Tset if k != "warrior"]
             
             # 过滤：已满级的兵种不出现在俘虏系统（避免浪费选择）
             # 只针对“已拥有且已满级”的情况；未解锁兵种不受影响（仍可作为新兵种俘获）
@@ -1508,10 +1508,10 @@ def run():
             seed = (base_seed << 7) ^ (state.battle_count + 1) ^ (stage_idx << 11)
             rng = random.Random(seed)
             
-            # 第0层禁止出现战士(Q)、犀牛(F)、自爆车(M) - 避免开局过难
+            # 第0层禁止出现战士(warrior)、犀牛(rhino)、自爆车(exploder) - 避免开局过难
             available_keys = list(ORDER_KEYS)
             if node.layer_index == 0:
-                available_keys = [k for k in ORDER_KEYS if k not in ("Q", "F", "M")]
+                available_keys = [k for k in ORDER_KEYS if k not in ("warrior", "rhino", "exploder")]
                 ai_k = min(ai_k, len(available_keys))
             
             if ai_k >= len(available_keys):
@@ -2301,7 +2301,7 @@ def run():
                                 campaign_run.current_node_id = None
                                 
                                 # 弱兵种开局补偿：第一场战斗前给予Combo卡
-                                weak_start_units = {"E", "F", "G", "N", "M"}  # 大锤、犀牛、刺客、轻骑、自爆车
+                                weak_start_units = {"maul", "rhino", "assassin", "light_cavalry", "exploder"}  # 大锤、犀牛、刺客、轻骑、自爆车
                                 primary = str(getattr(campaign_run, "primary_unit", "") or "")
                                 if primary in weak_start_units:
                                     # 标记：弱兵种开局已提前获得Combo1
@@ -2489,7 +2489,7 @@ def run():
                                 campaign_run.state.gold -= cost
                             
                             # 判断战士锻造权限
-                            if target == "Q" and campaign_run.blessing_selected != "veteran_unyielding":
+                            if target == "warrior" and campaign_run.blessing_selected != "veteran_unyielding":
                                 campaign_run.forge_result_message = "战士无法锻造（需要【不屈之志】祝福）"
                                 campaign_run.forge_done = True
                                 continue
@@ -2633,11 +2633,11 @@ def run():
                                 # === 祝福：不屈意志 - 开局奖励 ===
                                 if campaign_run.blessing_selected == "veteran_unyielding":
                                     # 战士升至2级
-                                    campaign_run.unit_levels["Q"] = 2
+                                    campaign_run.unit_levels["warrior"] = 2
                                     # 攻击锻造+2
-                                    campaign_run.forge.offense_level_by_unit["Q"] = 2
+                                    campaign_run.forge.offense_level_by_unit["warrior"] = 2
                                     # 防御锻造+2
-                                    campaign_run.forge.defense_level_by_unit["Q"] = 2
+                                    campaign_run.forge.defense_level_by_unit["warrior"] = 2
                             
                             if campaign_run.pending_finish_run:
                                 mode = "campaign_victory"

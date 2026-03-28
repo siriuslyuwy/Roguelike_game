@@ -121,25 +121,24 @@ def _mk_unit_type(key: str, cfg: dict) -> UnitType:
 
 
 UNIT_TYPES: Dict[str, UnitType] = {
-    "Q": _mk_unit_type("Q", UnitArchetypes.CIRCLE),
-    "W": _mk_unit_type("W", UnitArchetypes.SQUARE),
-    "E": _mk_unit_type("E", UnitArchetypes.TRIANGLE),
-    "R": _mk_unit_type("R", UnitArchetypes.HEXAGON),
-    "A": _mk_unit_type("A", UnitArchetypes.PENTAGON),
-    "S": _mk_unit_type("S", UnitArchetypes.DIAMOND),
-    "D": _mk_unit_type("D", UnitArchetypes.STAR),
-    "F": _mk_unit_type("F", UnitArchetypes.RHINO),
-    "G": _mk_unit_type("G", UnitArchetypes.ASSASSIN),
-    "H": _mk_unit_type("H", UnitArchetypes.INTERCEPTOR),
-    "J": _mk_unit_type("J", UnitArchetypes.DRUMMER),
-    "K": _mk_unit_type("K", UnitArchetypes.SPEARMAN),
-    "L": _mk_unit_type("L", UnitArchetypes.FROST_ARCHER),
-    "M": _mk_unit_type("M", UnitArchetypes.SPLITTER),
-    "O": _mk_unit_type("O", UnitArchetypes.SPLITLING),
-    "N": _mk_unit_type("N", UnitArchetypes.LIGHT_CAV),
+    "warrior": _mk_unit_type("warrior", UnitArchetypes.CIRCLE),
+    "shield": _mk_unit_type("shield", UnitArchetypes.SQUARE),
+    "maul": _mk_unit_type("maul", UnitArchetypes.TRIANGLE),
+    "berserker": _mk_unit_type("berserker", UnitArchetypes.HEXAGON),
+    "priest": _mk_unit_type("priest", UnitArchetypes.PENTAGON),
+    "archer": _mk_unit_type("archer", UnitArchetypes.DIAMOND),
+    "mage": _mk_unit_type("mage", UnitArchetypes.STAR),
+    "rhino": _mk_unit_type("rhino", UnitArchetypes.RHINO),
+    "assassin": _mk_unit_type("assassin", UnitArchetypes.ASSASSIN),
+    "interceptor": _mk_unit_type("interceptor", UnitArchetypes.INTERCEPTOR),
+    "drummer": _mk_unit_type("drummer", UnitArchetypes.DRUMMER),
+    "spearman": _mk_unit_type("spearman", UnitArchetypes.SPEARMAN),
+    "frost_archer": _mk_unit_type("frost_archer", UnitArchetypes.FROST_ARCHER),
+    "exploder": _mk_unit_type("exploder", UnitArchetypes.SPLITTER),
+    "light_cavalry": _mk_unit_type("light_cavalry", UnitArchetypes.LIGHT_CAV),
 }
 
-ORDER_KEYS = ["Q", "W", "E", "R", "A", "S", "D", "F", "G", "H", "J", "K", "L", "M", "N"]
+ORDER_KEYS = ["warrior", "shield", "maul", "berserker", "priest", "archer", "mage", "rhino", "assassin", "interceptor", "drummer", "spearman", "frost_archer", "exploder", "light_cavalry"]
 
 UNIT_LEVEL_STEP = 0.03
 MAX_UNIT_LEVEL = 4
@@ -747,47 +746,47 @@ class Game:
         return ut
 
     def _apply_max_level_traits(self, key: str, ut: UnitType) -> None:
-        if key == "Q":  # 战士
+        if key == "warrior":  # 战士
             ut.first_hit_invuln_duration = 5.0
-        elif key == "W":  # 盾卫
+        elif key == "shield":  # 盾卫
             ut.passive_reflect_ratio = 0.20
-        elif key == "E":  # 大锤
+        elif key == "maul":  # 大锤
             ut.aoe_stun_radius = max(ut.aoe_stun_radius, 48.0)
-        elif key == "R":  # 狂战
+        elif key == "berserker":  # 狂战
             ut.lifesteal_ratio = max(ut.lifesteal_ratio, 0.20)
-        elif key == "A":  # 牧师
+        elif key == "priest":  # 牧师
             ut.heal_aoe_radius = max(ut.heal_aoe_radius, 120.0)
-        elif key == "S":  # 弓手
+        elif key == "archer":  # 弓手
             ut.projectile_pierce = max(ut.projectile_pierce, 1)
             if ut.projectile_falloff <= 0.0:
                 ut.projectile_falloff = 0.3
-        elif key == "D":  # 法师
+        elif key == "mage":  # 法师
             radius = max(ut.aoe_radius, 60.0)
             ut.ignite_radius = max(ut.ignite_radius, radius)
             ut.ignite_duration = max(ut.ignite_duration, 3.0)
             ut.ignite_dps = max(ut.ignite_dps, ut.damage * 0.6)
             ut.ignite_on_attack = True
-        elif key == "F":  # 犀牛
+        elif key == "rhino":  # 犀牛
             ut.knockback_stun_threshold = max(ut.knockback_stun_threshold, 4)
             ut.knockback_stun_duration = max(ut.knockback_stun_duration, 1.0)
-        elif key == "G":  # 刺客
+        elif key == "assassin":  # 刺客
             ut.stealth_in_own_half = True
-        elif key == "H":  # 破箭
+        elif key == "interceptor":  # 破箭
             ut.reflect_heal_ratio = max(ut.reflect_heal_ratio, 0.08)
-        elif key == "J":  # 鼓手
+        elif key == "drummer":  # 鼓手
             ut.aura_shield_ratio = max(ut.aura_shield_ratio, 0.25)
             ut.aura_shield_interval = max(ut.aura_shield_interval, 10.0)
             ut.aura_shield_duration = max(ut.aura_shield_duration, 5.0)
-        elif key == "K":  # 矛兵
+        elif key == "spearman":  # 矛兵
             ut.control_immune = True
-        elif key == "L":  # 冰弓
+        elif key == "frost_archer":  # 冰弓
             ut.projectile_stun_aoe_radius = max(ut.projectile_stun_aoe_radius, 60.0)
-        elif key == "M":  # 自爆车
+        elif key == "exploder":  # 自爆车
             ut.ignite_radius = max(ut.ignite_radius, 70.0)
             ut.ignite_duration = max(ut.ignite_duration, 5.0)
             ut.ignite_dps = max(ut.ignite_dps, 35.0)
             ut.ignite_on_attack = False
-        elif key == "N":  # 轻骑
+        elif key == "light_cavalry":  # 轻骑
             ut.charge_rearm_time = max(ut.charge_rearm_time, 2.0)
 
     def _apply_drummer_shield(self, source: Unit, allies: List[Unit]) -> None:
@@ -995,7 +994,7 @@ class Game:
             if side == "left":
                 cost = int(cost * self.left_cost_mult)
             elif self.mirror_apply_right:
-                if key == "Q" and self.right_veteran_q_free_cost:
+                if key == "warrior" and self.right_veteran_q_free_cost:
                     cost = 0
                 else:
                     cost = int(cost * self.right_cost_mult)
@@ -1006,10 +1005,10 @@ class Game:
         return 0 <= lane < LANE_COUNT
 
     def spawn_unit(self, side: str, lane: int, key: str):
-        # 老兵祝福：英雄祭献 - 第5关起禁止部署Q
-        if side == "left" and key == "Q" and self.campaign_day >= self.veteran_sacrifice_day_limit:
+        # 老兵祝福：英雄祭献 - 第5关起禁止部署warrior
+        if side == "left" and key == "warrior" and self.campaign_day >= self.veteran_sacrifice_day_limit:
             return False
-        if side == "right" and self.mirror_apply_right and key == "Q" and self.campaign_day >= self.right_veteran_sacrifice_day_limit:
+        if side == "right" and self.mirror_apply_right and key == "warrior" and self.campaign_day >= self.right_veteran_sacrifice_day_limit:
             return False
         
         if not self.can_spawn(side, lane, key):
@@ -1040,11 +1039,11 @@ class Game:
                 sac_dmg_mult = self.right_veteran_sacrifice_damage_mult
                 mentor_q_hp = self.right_veteran_mentor_q_hp_mult
                 mentor_q_dmg = self.right_veteran_mentor_q_damage_mult
-            if key != "Q" and sac_hp_mult > 1.0:
+            if key != "warrior" and sac_hp_mult > 1.0:
                 hp_mult *= sac_hp_mult
                 damage_mult *= sac_dmg_mult
             # 教官光环：Q的HP+75%/伤害-40%
-            if key == "Q":
+            if key == "warrior":
                 hp_mult *= mentor_q_hp
                 damage_mult *= mentor_q_dmg
             
@@ -1082,7 +1081,7 @@ class Game:
             
             # 老兵祝福：破釜沉舟 - Q部署成本为0，但扣基地血
             cost = unit_type.cost
-            if key == "Q" and self.veteran_q_free_cost:
+            if key == "warrior" and self.veteran_q_free_cost:
                 cost = 0
                 if self.veteran_q_base_damage > 0 and lane < len(self.left_bases):
                     self.left_bases[lane].hp -= self.veteran_q_base_damage
@@ -1110,7 +1109,7 @@ class Game:
             self.right_units[lane].append(unit)
             cost = unit_type.cost
             if self.mirror_apply_right:
-                if key == "Q" and self.right_veteran_q_free_cost:
+                if key == "warrior" and self.right_veteran_q_free_cost:
                     cost = 0
                     if self.right_veteran_q_base_damage > 0 and lane < len(self.right_bases):
                         self.right_bases[lane].hp -= self.right_veteran_q_base_damage
@@ -1417,8 +1416,8 @@ class Game:
             # 祝福：教官光环 - 老兵正后方的单位增益（攻速/伤害由modifiers决定）
             if self.veteran_mentor_atkspd_bonus > 0.0 or self.veteran_mentor_damage_bonus > 0.0:
                 for veteran in left_list:
-                    # 检查是否是老兵（key=="Q"）
-                    if getattr(veteran.unit_type, "key", "") == "Q":
+                    # 检查是否是老兵（key=="warrior"）
+                    if getattr(veteran.unit_type, "key", "") == "warrior":
                         # 这个单位是老兵，检查后方的友军
                         for ally in left_list:
                             if ally is veteran:
@@ -1435,7 +1434,7 @@ class Game:
                                     ally.ui_highlights.add("veteran_mentor")
             if self.mirror_apply_right and (self.right_veteran_mentor_atkspd_bonus > 0.0 or self.right_veteran_mentor_damage_bonus > 0.0):
                 for veteran in right_list:
-                    if getattr(veteran.unit_type, "key", "") == "Q":
+                    if getattr(veteran.unit_type, "key", "") == "warrior":
                         for ally in right_list:
                             if ally is veteran:
                                 continue
@@ -1898,13 +1897,13 @@ class Game:
                     if base_alive:
                         impact_mult = 1.0
                         unit_key = getattr(u.unit_type, "key", "")
-                        if unit_key == "G":
+                        if unit_key == "assassin":
                             impact_mult = 0.3
-                        elif unit_key == "N":
+                        elif unit_key == "light_cavalry":
                             impact_mult = 0.5
-                        elif unit_key == "F":
+                        elif unit_key == "rhino":
                             impact_mult = 1.5
-                        
+
                         dmg = max(1, int(round(u.hp * impact_mult)))
 
                         if self.bases_invulnerable:
@@ -1931,13 +1930,13 @@ class Game:
                     if base_alive:
                         impact_mult = 1.0
                         unit_key = getattr(u.unit_type, "key", "")
-                        if unit_key == "G":
+                        if unit_key == "assassin":
                             impact_mult = 0.3
-                        elif unit_key == "N":
+                        elif unit_key == "light_cavalry":
                             impact_mult = 0.5
-                        elif unit_key == "F":
+                        elif unit_key == "rhino":
                             impact_mult = 1.5
-                        
+
                         dmg = max(1, int(round(u.hp * impact_mult)))
 
                         if self.bases_invulnerable:
@@ -2081,12 +2080,12 @@ class Game:
                         damage_falloff = 1.0 - remain
                     # 发射投射物（含 AOE 半径）
                     proj_visual = "default"
-                    # S: 弓手, L: 冰弓 -> 箭矢
+                    # archer, frost_archer -> 箭矢
                     unit_key = getattr(u.unit_type, "key", "")
-                    if unit_key in ["S", "L"]:
+                    if unit_key in ["archer", "frost_archer"]:
                         proj_visual = "arrow"
-                    # D: 法师 -> 法球
-                    elif unit_key in ["D"]:
+                    # mage -> 法球
+                    elif unit_key in ["mage"]:
                         proj_visual = "orb"
                     
                     self.projectiles.append(
